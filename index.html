@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHubユーザー情報表示ツール</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 w-full">
+    <h1 class="text-2xl font-bold text-center">GitHubユーザー一覧</h1>
+    <div id="userList" class="grid gap-5 p-6"></div>
+</body>
+
+<script>
+    async function loadGitHubAPIUsers() {
+        const userList = document.getElementById("userList");
+
+        try {
+            const response = await fetch("https://api.github.com/users");
+
+        if (!response.ok) {
+            throw new Error("通信エラー: " + response.status);
+        }
+            const users = await response.json();
+            
+            console.log(users);
+
+            const detailedUsers = await Promise.all(
+    users.map(async (user) => {
+        const detailResponse = await fetch(
+            `https://api.github.com/users/${user.login}`
+        );
+
+        if (!detailResponse.ok) {
+            throw new Error("ユーザー情報の取得に失敗しました");
+        }
+
+        return await detailResponse.json();
+    })
+);
+
+            userList.textContent = "";
+
+            detailedUsers.forEach((user) => {
+                const card = document.createElement("div");
+                card.className = "bg-white rounded-lg shadow items-center p-5"
+
+                const avatar = document.createElement("img");
+                avatar.src = user.avatar_url;
+                avatar.className = "w-16 h-16 rounded-full"
+                
+                const name = document.createElement("h2");
+                name.className = "text-lg font-bold";
+                name.textContent = user.login; 
+
+                const bio = document.createElement("h3");
+                bio.className = "text-gray-600 text-normal"
+                bio.textContent = user.bio;
+
+                const followers = document.createElement("p");
+                followers.className = "text-gray-700 font-bold text-normal"
+                followers.textContent = "フォロワー数: " + user.followers;
+
+                card.appendChild(avatar);
+                card.appendChild(name);
+                card.appendChild(bio);
+                card.appendChild(followers);
+                userList.appendChild(card);
+            });  
+        }   catch (error) {
+            userList.textContent = "ユーザーが見つかりませんでした。";
+            console.error(error);
+        }
+    }
+
+    loadGitHubAPIUsers();
+</script>
+</body>
+</html>
